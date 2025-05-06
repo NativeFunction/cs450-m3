@@ -1,15 +1,33 @@
 import React, { Component } from "react";
 import "./App.css";
 import * as d3 from 'd3';
+import DropDownFilter from "./DropDownFilter";
 
 class App extends Component {
 
   constructor(props) {
     super(props);
     this.state = {
-      data: []
+      data: [],
+      //list of strings containing the current available vehicle types
+      vehicleTypeOptions: []
     };
+
+    var tempData = [];
+    
+    //d3.csv(tips, (x) => tempData.push({
+    //  total_bill: parseFloat(x.total_bill), 
+    //  tip:  parseFloat(x.tip),
+    //  sex: (x.sex == "Male" ? true : false),//male true, female false
+    //  smoker: (x.smoker == "Yes" ? true : false),
+    //  day: x.day,
+    //  time: x.time,
+    //  size: parseInt(x.size)
+    //})).then(() => this.setState({ data: tempData }));
+
   }
+
+
 
   componentDidMount() {
     this.renderChart()
@@ -19,6 +37,9 @@ class App extends Component {
     this.renderChart()
   }
 
+  filterData = () => {
+
+  }
 
   renderChart = () => {
 
@@ -32,13 +53,29 @@ class App extends Component {
 
 
   }
+
   render() {
     return (
       <div>
-        <div className="parent">
-          <div className="child0">
-            <svg className="container">
-              <g className="inner_chart"></g>
+        <div className="container">
+          <div className="header">New York City Motor Vehicle Collisions</div>
+          <div className="controls">
+            <DropDownFilter label="Borough" options={["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"]} />
+            <DropDownFilter label="Vehicle Type" options={this.state.vehicleTypeOptions} />
+          </div>
+          <div className="geomap">
+            <svg className="geomap_svg">
+              <g className="geomap_group"></g>
+            </svg>
+          </div>
+          <div className="contributingFactors">
+            <svg className="contributingFactors_svg">
+              <g className="contributingFactors_group"></g>
+            </svg>
+          </div>
+          <div className="incidencesAndOutcome">
+            <svg className="incidencesAndOutcome_svg">
+              <g className="incidencesAndOutcome_group"></g>
             </svg>
           </div>
         </div>
