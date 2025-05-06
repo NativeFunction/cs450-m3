@@ -127,7 +127,7 @@ class App extends Component {
             </svg>
           </div>
           <div className="incidencesAndOutcome">
-            <StackedBarChart />
+            <StackedBarChart data={this.state.data} />
           </div>
         </div>
       </div>
