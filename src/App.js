@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import "./App.css";
 import * as d3 from 'd3';
 import DropDownFilter from "./DropDownFilter";
+import pako from "pako";
 
 class App extends Component {
 
@@ -13,17 +14,40 @@ class App extends Component {
       vehicleTypeOptions: []
     };
 
-    var tempData = [];
-    
-    //d3.csv(tips, (x) => tempData.push({
-    //  total_bill: parseFloat(x.total_bill), 
-    //  tip:  parseFloat(x.tip),
-    //  sex: (x.sex == "Male" ? true : false),//male true, female false
-    //  smoker: (x.smoker == "Yes" ? true : false),
-    //  day: x.day,
-    //  time: x.time,
-    //  size: parseInt(x.size)
-    //})).then(() => this.setState({ data: tempData }));
+    fetch("cs450-m3/NYCrashes2025.gz")
+      .then((response) => response.arrayBuffer())
+      .then((buffer) => {
+        const decompressedData = pako.inflate(new Uint8Array(buffer), { to: "string" });
+
+        const parsedData = d3.csvParse(decompressedData, (x) => ({
+          "CRASH DATE": x["CRASH DATE"],
+          "BOROUGH": x["BOROUGH"],
+          "NUMBER OF PERSONS INJURED": parseInt(x["NUMBER OF PERSONS INJURED"]),
+          "NUMBER OF PERSONS KILLED": parseInt(x["NUMBER OF PERSONS KILLED"]),
+          "NUMBER OF PEDESTRIANS INJURED": parseInt(x["NUMBER OF PEDESTRIANS INJURED"]),
+          "NUMBER OF PEDESTRIANS KILLED": parseInt(x["NUMBER OF PEDESTRIANS KILLED"]),
+          "NUMBER OF CYCLIST INJURED": parseInt(x["NUMBER OF CYCLIST INJURED"]),
+          "NUMBER OF CYCLIST KILLED": parseInt(x["NUMBER OF CYCLIST KILLED"]),
+          "NUMBER OF MOTORIST INJURED": parseInt(x["NUMBER OF MOTORIST INJURED"]),
+          "NUMBER OF MOTORIST KILLED": parseInt(x["NUMBER OF MOTORIST KILLED"]),
+          "CONTRIBUTING FACTOR VEHICLE 1": x["CONTRIBUTING FACTOR VEHICLE 1"],
+          "CONTRIBUTING FACTOR VEHICLE 2": x["CONTRIBUTING FACTOR VEHICLE 2"],
+          "CONTRIBUTING FACTOR VEHICLE 3": x["CONTRIBUTING FACTOR VEHICLE 3"],
+          "CONTRIBUTING FACTOR VEHICLE 4": x["CONTRIBUTING FACTOR VEHICLE 4"],
+          "CONTRIBUTING FACTOR VEHICLE 5": x["CONTRIBUTING FACTOR VEHICLE 5"],
+          "VEHICLE TYPE CODE 1": x["VEHICLE TYPE CODE 1"],
+          "VEHICLE TYPE CODE 2": x["VEHICLE TYPE CODE 2"],
+          "VEHICLE TYPE CODE 3": x["VEHICLE TYPE CODE 3"],
+          "VEHICLE TYPE CODE 4": x["VEHICLE TYPE CODE 4"],
+          "VEHICLE TYPE CODE 5": x["VEHICLE TYPE CODE 5"],
+          "NEIGHBORHOOD": x["NEIGHBORHOOD"],
+        }));
+
+        console.log(parsedData.length)
+        console.log(parsedData[0])
+        this.setState({ data: parsedData });
+      })
+      .catch((error) => console.error("Error loading GZ:", error));
 
   }
 
