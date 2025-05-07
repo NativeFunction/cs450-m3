@@ -18,7 +18,6 @@ class App extends Component {
       
       data: [],
       geoData: {},
-      //list of strings containing the current available vehicle types
       vehicleTypeOptions: [],
     };
 
@@ -65,7 +64,7 @@ class App extends Component {
         console.log(this.savedData.length);
         console.log(this.savedData[0]);
         this.setState({ data: this.savedData });
-        this.setGeoData(this.savedData);
+        this.setData(this.savedData);
       })
       .catch((error) => console.error("Error loading GZ:", error));
   }
@@ -78,8 +77,10 @@ class App extends Component {
     this.renderChart();
   }
 
-  setGeoData = (data) => {
+  setData = (data) => {
     var geoDataTemp = {};
+    var vehTypeTemp = {};
+    
     
     var largest = 0;
     for(var i = 0; i < data.length; i++)
@@ -92,14 +93,26 @@ class App extends Component {
 
       if(geoDataTemp[key] > largest)
         largest = geoDataTemp[key];
+
+      for(var j = 1; j <= 5 ; j++)
+      {
+        var key = data[i][`VEHICLE TYPE CODE ${j}`];
+        if (vehTypeTemp.hasOwnProperty(key))
+          vehTypeTemp[key]++;
+        else
+          vehTypeTemp[key] = 1;
+      }
     }
 
     geoDataTemp["__largest__"] = largest;
 
 
-    this.setState({ geoData: geoDataTemp });
+    this.setState({ geoData: geoDataTemp, vehicleTypeOptions: Object.entries(vehTypeTemp)
+      .filter(([key, value]) => value > 1000 && key !== "" && key !== "UNKNOWN")
+      .map(([key]) => key) });
 
   };
+
 
   filterData = () => {
     
@@ -116,12 +129,17 @@ class App extends Component {
 
     
     this.setState({ data: filteredData });
-    this.setGeoData(filteredData);
+    this.setData(filteredData);
 
   };
 
   filterBoroughData = (borough) => {
     this.borough = borough;
+    this.filterData()
+  };
+
+  filterVehTypeData = (vehType) => {
+    this.vehType = vehType;
     this.filterData()
   };
 
@@ -159,6 +177,7 @@ class App extends Component {
               ]}
             />
             <DropDownFilter 
+              onChange={this.filterVehTypeData}
               label="Vehicle Type"
               options={this.state.vehicleTypeOptions}
             />

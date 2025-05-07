@@ -14,6 +14,12 @@
 .control
 {
     margin: 0px auto 0px auto;
+    width: 250px;
+}
+
+.dropdown
+{
+    width: inherit;
 }
 
 .geoMapAndContFactors
