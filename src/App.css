@@ -75,6 +75,7 @@ select:focus {
 }
 
 .geomap {
+    margin-left: 50px;
     padding: 24px;
     background: #f9fafb;
     border-radius: 12px;
@@ -83,6 +84,7 @@ select:focus {
 }
 
 .contributingFactors {
+    margin-right: 50px;
     padding: 24px;
     background: #f9fafb;
     border-radius: 12px;

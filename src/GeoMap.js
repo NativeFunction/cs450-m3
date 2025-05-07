@@ -76,7 +76,7 @@ class GeoMap extends Component {
       });
     //console.log(nyc_neighborhoods)
 
-    var legendItemWidth = 20,legendItemHeight = 20,legendXPos=width + 20, legendYPos=30;
+    var legendItemWidth = 20,legendItemHeight = 20,legendXPos=width + 100, legendYPos=30;
     var legendData = [0.8, 0.6, 0.4, 0.2, 0.1, 0]
     var legendTextData = ["≥80%","<80%","<60%","<40%","<20%","0%",]
     
@@ -104,13 +104,13 @@ class GeoMap extends Component {
   render() {
 
     return (
-      <div className="geomap" width="800" height="500">
+      <div className="geomap" width="700" height="500">
           <div id='neighborhoodDisplay'> </div>
-          <svg className="geomap_svg" width="800" height="500">
+          <svg className="geomap_svg" width="700" height="500">
             <g className="geomap_map"></g>
             <g className="geomap_legend">
               <g className="geomap_legend_title">
-                <text x="520" y="15">Crash %</text>
+                <text x="600" y="15">Crash %</text>
               </g>
               <g className="geomap_legend_content"></g>
             </g>
