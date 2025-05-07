@@ -56,21 +56,37 @@ function computeBarData(data) {
 }
 
 const BAR_HEIGHT = 54;
-const LEGEND_CIRCLE_RADIUS = 9;
-const LEGEND_ITEM_HEIGHT = 24;
+const LEGEND_CIRCLE_RADIUS = 8;
+const LEGEND_ITEM_HEIGHT = 20;
 const LEGEND_GAP = 18;
-const LEGEND_FONT_SIZE = 15;
-const HEADER_FONT_SIZE = 20;
-const HEADER_HEIGHT = 30;
+const LEGEND_FONT_SIZE = 13;
+const HEADER_FONT_SIZE = 22;
+const HEADER_HEIGHT = 32;
 const PADDING = 32;
 const BOTTOM_LABEL_HEIGHT = 30;
+const MIN_WIDTH = 600;
+const MIN_HEIGHT = 200;
+const TITLE_LEGEND_GAP = 18;
+const MIN_BAR_SEGMENT_WIDTH = 35; // px
 
-const StackedBarChart = ({ data }) => {
+const StackedBarChart = ({ data, loading }) => {
   const svgRef = useRef();
-  const width =
-    typeof window !== "undefined" ? window.innerWidth - 2 * PADDING : 800;
-  const barY = HEADER_HEIGHT + LEGEND_ITEM_HEIGHT + 24;
-  const svgHeight = barY + BAR_HEIGHT + BOTTOM_LABEL_HEIGHT + 24;
+  const width = Math.max(
+    typeof window !== "undefined" ? window.innerWidth - 2 * PADDING : 800,
+    MIN_WIDTH
+  );
+  // Place title, then legend below, then bar
+  const titleY = HEADER_FONT_SIZE + 8;
+  const legendY = titleY + TITLE_LEGEND_GAP + 4;
+  const legendRowHeight = LEGEND_ITEM_HEIGHT + 8;
+  // Calculate legend wrapping (max 4 per row)
+  const legendPerRow = Math.floor((width - 2 * PADDING) / 180) || 1;
+  const legendRows = Math.ceil(LEGEND_ITEMS.length / legendPerRow);
+  const barY = legendY + legendRows * legendRowHeight + 8;
+  const svgHeight = Math.max(
+    barY + BAR_HEIGHT + BOTTOM_LABEL_HEIGHT + 24,
+    MIN_HEIGHT
+  );
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -80,28 +96,53 @@ const StackedBarChart = ({ data }) => {
     if (!barData) return;
     const sum = barData.reduce((acc, d) => acc + d.value, 0);
     if (sum === 0) return;
-    const barDataWithPct = barData.map((d) => ({ ...d, pct: d.value / sum }));
-    const total = data.length;
+    // Calculate barDataWithPct and min width logic
+    let barDataWithPct = barData.map((d) => ({ ...d, pct: d.value / sum }));
+    // Calculate pixel widths, enforce min width for <1% segments
+    let totalBarWidth = width - 2 * PADDING;
+    let pixelWidths = barDataWithPct.map((d) => d.pct * totalBarWidth);
+    let minWidthFlags = pixelWidths.map((w) => w < MIN_BAR_SEGMENT_WIDTH);
+    let minWidthCount = minWidthFlags.filter(Boolean).length;
+    let minWidthTotal = minWidthCount * MIN_BAR_SEGMENT_WIDTH;
+    let restWidth = totalBarWidth - minWidthTotal;
+    let restPctTotal = barDataWithPct.reduce(
+      (acc, d, i) => acc + (!minWidthFlags[i] ? d.pct : 0),
+      0
+    );
+    // Recalculate pixel widths
+    pixelWidths = barDataWithPct.map((d, i) =>
+      minWidthFlags[i]
+        ? MIN_BAR_SEGMENT_WIDTH
+        : restPctTotal > 0
+        ? (d.pct / restPctTotal) * restWidth
+        : 0
+    );
 
-    // Header
+    // Header (title)
     svg
       .append("text")
       .attr("x", PADDING)
-      .attr("y", HEADER_FONT_SIZE + 2)
+      .attr("y", titleY)
       .attr("font-size", HEADER_FONT_SIZE)
-      .attr("font-weight", 500)
+      .attr("font-weight", 600)
       .text("Incidences and Outcome");
 
-    // Legend
+    // Legend (wrap to multiple rows if needed)
     const legendGroup = svg
       .append("g")
-      .attr("transform", `translate(${PADDING + 180},${HEADER_HEIGHT - 6})`);
+      .attr("transform", `translate(${PADDING},${legendY})`);
     legendGroup
       .selectAll("g")
       .data(LEGEND_ITEMS)
       .enter()
       .append("g")
-      .attr("transform", (d, i) => `translate(${i * 140},0)`)
+      .attr(
+        "transform",
+        (d, i) =>
+          `translate(${(i % legendPerRow) * 180},${
+            Math.floor(i / legendPerRow) * legendRowHeight
+          })`
+      )
       .each(function (d) {
         d3.select(this)
           .append("circle")
@@ -116,6 +157,7 @@ const StackedBarChart = ({ data }) => {
           .attr("x", LEGEND_CIRCLE_RADIUS + 6)
           .attr("y", 5)
           .attr("font-size", LEGEND_FONT_SIZE)
+          .attr("font-family", "sans-serif")
           .text(d.label);
       });
 
@@ -124,17 +166,17 @@ const StackedBarChart = ({ data }) => {
       .append("rect")
       .attr("x", PADDING)
       .attr("y", barY)
-      .attr("width", width - 2 * PADDING)
+      .attr("width", totalBarWidth)
       .attr("height", BAR_HEIGHT)
       .attr("fill", "#fff")
       .attr("stroke", "#bbb")
       .attr("stroke-width", 2)
-      .attr("rx", 5);
+      .attr("rx", 8);
 
     // Stacked Bar segments
     let barStart = PADDING;
     barDataWithPct.forEach((d, i) => {
-      const barWidth = d.pct * (width - 2 * PADDING);
+      const barWidth = pixelWidths[i];
       svg
         .append("rect")
         .attr("x", barStart)
@@ -142,21 +184,24 @@ const StackedBarChart = ({ data }) => {
         .attr("width", barWidth)
         .attr("height", BAR_HEIGHT)
         .attr("fill", d.color)
-        .attr("rx", i === 0 ? 5 : 0)
-        .attr("ry", i === 0 ? 5 : 0)
+        .attr("rx", i === 0 ? 8 : 0)
+        .attr("ry", i === 0 ? 8 : 0)
         .attr("stroke-width", 0)
         .attr("stroke", "none");
       // Percentage label
-      if (d.pct >= 0.04) {
+      let pctLabel =
+        d.pct < 0.01 && d.value > 0 ? "<1%" : `${Math.round(d.pct * 100)}%`;
+      if (barWidth > 14) {
         svg
           .append("text")
           .attr("x", barStart + barWidth / 2)
           .attr("y", barY + BAR_HEIGHT / 2 + 7)
           .attr("text-anchor", "middle")
           .attr("fill", i === 0 ? "#fff" : "#222")
-          .attr("font-size", 18)
+          .attr("font-size", 16)
+          .attr("font-family", "sans-serif")
           .attr("font-weight", 600)
-          .text(`${Math.round(d.pct * 100)}%`);
+          .text(pctLabel);
       }
       barStart += barWidth;
     });
@@ -166,18 +211,39 @@ const StackedBarChart = ({ data }) => {
       .append("text")
       .attr("x", PADDING)
       .attr("y", barY + BAR_HEIGHT + 28)
-      .attr("font-size", 18)
+      .attr("font-size", 16)
       .attr("fill", "#444")
+      .attr("font-family", "sans-serif")
       .text("0");
     svg
       .append("text")
       .attr("x", width - PADDING)
       .attr("y", barY + BAR_HEIGHT + 28)
-      .attr("font-size", 18)
+      .attr("font-size", 16)
       .attr("fill", "#444")
+      .attr("font-family", "sans-serif")
       .attr("text-anchor", "end")
-      .text(total.toLocaleString());
+      .text(data.length.toLocaleString());
   }, [data, width]);
+
+  if (!data || data.length === 0) {
+    return (
+      <div
+        style={{
+          minWidth: MIN_WIDTH,
+          minHeight: MIN_HEIGHT,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#fff",
+          borderRadius: 8,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        }}
+      >
+        {loading ? "Loading" : "No data available"}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -193,7 +259,13 @@ const StackedBarChart = ({ data }) => {
     >
       <svg
         ref={svgRef}
-        style={{ width: "100%", height: svgHeight, display: "block" }}
+        style={{
+          width: "100%",
+          minWidth: MIN_WIDTH,
+          height: svgHeight,
+          minHeight: MIN_HEIGHT,
+          display: "block",
+        }}
       />
     </div>
   );
