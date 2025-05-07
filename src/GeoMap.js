@@ -14,10 +14,10 @@ class GeoMap extends Component {
 
   safeDiv = (x, y) =>
   {
-    if(y == undefined || x == undefined || y == 0)
+    if(y === undefined || x === undefined || y === 0)
       return 0;
     var res = x / y;
-    if (res == NaN)
+    if (res === NaN)
       return 0;
 
     return res;
@@ -46,7 +46,7 @@ class GeoMap extends Component {
       console.log(this.props.data)
       console.log(this.props.total)
 
-      const colorScale = d3.scaleThreshold().domain([0.2, 0.4, 0.6, 0.8]).range(["#FED976", "#FEB24C", "#FC4E2A", "#BD0026", "#4D004B"]);
+      const colorScale = d3.scaleThreshold().domain([0.001, 0.2, 0.4, 0.6, 0.8]).range(["#AFAFAF", "#FED976", "#FEB24C", "#FC4E2A", "#BD0026", "#4D004B"]);
 
       map.selectAll("path")
       .data(nyc_neighborhoods.features)
@@ -77,8 +77,8 @@ class GeoMap extends Component {
     //console.log(nyc_neighborhoods)
 
     var legendItemWidth = 20,legendItemHeight = 20,legendXPos=width + 20, legendYPos=30;
-    var legendData = [0.8, 0.6, 0.4, 0.2, 0]
-    var legendTextData = ["≥80%","<80","<60","<40","<20"]
+    var legendData = [0.8, 0.6, 0.4, 0.2, 0.1, 0]
+    var legendTextData = ["≥80%","<80%","<60%","<40%","<20%","0%",]
     
     legend.selectAll("rect")
       .data(legendData)

@@ -4,10 +4,15 @@ class DropDownFilter extends Component {
   render() {
 
     const options = this.props.options.map(x => <option value={x}>{x}</option>)
+
+    const handleChange = (event) => {
+        this.props.onChange(event.target.value)
+    };
+
     return (
       <div className="control">
         <div className="label">{this.props.label}</div>
-        <select /*value={selectedValue} onChange={handleChange}*/>
+        <select onChange={handleChange}>
           <option value="All">All</option>
           {options}
         </select>
