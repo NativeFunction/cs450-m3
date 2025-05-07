@@ -5,7 +5,7 @@ class DropDownFilter extends Component {
 
     const options = this.props.options.map(x => <option value={x}>{x}</option>)
     return (
-      <div>
+      <div className="control">
         <div className="label">{this.props.label}</div>
         <select /*value={selectedValue} onChange={handleChange}*/>
           <option value="All">All</option>

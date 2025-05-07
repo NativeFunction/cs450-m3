@@ -3,6 +3,7 @@ import "./App.css";
 import * as d3 from "d3";
 import DropDownFilter from "./DropDownFilter";
 import StackedBarChart from "./StackedBarChart";
+import GeoMap from "./GeoMap";
 import pako from "pako";
 
 class App extends Component {
@@ -10,21 +11,11 @@ class App extends Component {
     super(props);
     this.state = {
       data: [],
+      geoData: {},
       //list of strings containing the current available vehicle types
       vehicleTypeOptions: [],
     };
 
-    var tempData = [];
-
-    //d3.csv(tips, (x) => tempData.push({
-    //  total_bill: parseFloat(x.total_bill),
-    //  tip:  parseFloat(x.tip),
-    //  sex: (x.sex == "Male" ? true : false),//male true, female false
-    //  smoker: (x.smoker == "Yes" ? true : false),
-    //  day: x.day,
-    //  time: x.time,
-    //  size: parseInt(x.size)
-    //})).then(() => this.setState({ data: tempData }));
     fetch("cs450-m3/NYCrashes2025.gz")
       .then((response) => response.arrayBuffer())
       .then((buffer) => {
@@ -65,6 +56,7 @@ class App extends Component {
         console.log(parsedData.length);
         console.log(parsedData[0]);
         this.setState({ data: parsedData });
+        this.setGeoData(parsedData);
       })
       .catch((error) => console.error("Error loading GZ:", error));
   }
@@ -76,6 +68,29 @@ class App extends Component {
   componentDidUpdate() {
     this.renderChart();
   }
+
+  setGeoData = (data) => {
+    var geoDataTemp = {};
+    
+    var largest = 0;
+    for(var i = 0; i < data.length; i++)
+    {
+      var key = data[i].NEIGHBORHOOD;
+      if (geoDataTemp.hasOwnProperty(key))
+        geoDataTemp[key]++;
+      else
+        geoDataTemp[key] = 1;
+
+      if(geoDataTemp[key] > largest)
+        largest = geoDataTemp[key];
+    }
+
+    geoDataTemp["__largest__"] = largest;
+
+
+    this.setState({ geoData: geoDataTemp });
+
+  };
 
   filterData = () => {};
 
@@ -111,21 +126,20 @@ class App extends Component {
                 "Staten Island",
               ]}
             />
-            <DropDownFilter
+            <DropDownFilter 
               label="Vehicle Type"
               options={this.state.vehicleTypeOptions}
             />
           </div>
-          <div className="geomap">
-            <svg className="geomap_svg">
-              <g className="geomap_group"></g>
-            </svg>
+          <div className="geoMapAndContFactors">
+            <GeoMap data={this.state.geoData} />
+            <div className="contributingFactors">
+              <svg className="contributingFactors_svg">
+                <g className="contributingFactors_group"></g>
+              </svg>
+            </div>
           </div>
-          <div className="contributingFactors">
-            <svg className="contributingFactors_svg">
-              <g className="contributingFactors_group"></g>
-            </svg>
-          </div>
+          
           <div className="incidencesAndOutcome">
             <StackedBarChart data={this.state.data} />
           </div>

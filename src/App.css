@@ -2,3 +2,22 @@
     font-size: 50px;
     margin: 20px 30px 20px 30px;
 }
+
+.controls
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.control
+{
+    margin: 0px auto 0px auto;
+}
+
+.geoMapAndContFactors
+{
+    display: flex;
+    flex-direction: row;
+}
