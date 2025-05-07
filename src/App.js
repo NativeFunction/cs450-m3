@@ -15,10 +15,10 @@ class App extends Component {
     this.startDate = new Date(1970, 0, 1);
     this.endDate = new Date(2070, 0, 1);
     this.state = {
-      
       data: [],
       geoData: {},
       vehicleTypeOptions: [],
+      loading: true,
     };
 
     fetch("cs450-m3/NYCrashes2025.gz")
@@ -28,13 +28,14 @@ class App extends Component {
           to: "string",
         });
 
-        
         this.savedData = d3.csvParse(decompressedData, (x) => {
           const [month, day, year] = x["CRASH DATE"].split("/");
           return {
             "CRASH DATE": new Date(year, month - 1, day),
             BOROUGH: x["BOROUGH"],
-            "NUMBER OF PERSONS INJURED": parseInt(x["NUMBER OF PERSONS INJURED"]),
+            "NUMBER OF PERSONS INJURED": parseInt(
+              x["NUMBER OF PERSONS INJURED"]
+            ),
             "NUMBER OF PERSONS KILLED": parseInt(x["NUMBER OF PERSONS KILLED"]),
             "NUMBER OF PEDESTRIANS INJURED": parseInt(
               x["NUMBER OF PEDESTRIANS INJURED"]
@@ -42,12 +43,16 @@ class App extends Component {
             "NUMBER OF PEDESTRIANS KILLED": parseInt(
               x["NUMBER OF PEDESTRIANS KILLED"]
             ),
-            "NUMBER OF CYCLIST INJURED": parseInt(x["NUMBER OF CYCLIST INJURED"]),
+            "NUMBER OF CYCLIST INJURED": parseInt(
+              x["NUMBER OF CYCLIST INJURED"]
+            ),
             "NUMBER OF CYCLIST KILLED": parseInt(x["NUMBER OF CYCLIST KILLED"]),
             "NUMBER OF MOTORIST INJURED": parseInt(
               x["NUMBER OF MOTORIST INJURED"]
             ),
-            "NUMBER OF MOTORIST KILLED": parseInt(x["NUMBER OF MOTORIST KILLED"]),
+            "NUMBER OF MOTORIST KILLED": parseInt(
+              x["NUMBER OF MOTORIST KILLED"]
+            ),
             "CONTRIBUTING FACTOR VEHICLE 1": x["CONTRIBUTING FACTOR VEHICLE 1"],
             "CONTRIBUTING FACTOR VEHICLE 2": x["CONTRIBUTING FACTOR VEHICLE 2"],
             "CONTRIBUTING FACTOR VEHICLE 3": x["CONTRIBUTING FACTOR VEHICLE 3"],
@@ -59,11 +64,12 @@ class App extends Component {
             "VEHICLE TYPE CODE 4": x["VEHICLE TYPE CODE 4"],
             "VEHICLE TYPE CODE 5": x["VEHICLE TYPE CODE 5"],
             NEIGHBORHOOD: x["NEIGHBORHOOD"],
-        };});
+          };
+        });
 
         console.log(this.savedData.length);
         console.log(this.savedData[0]);
-        this.setState({ data: this.savedData });
+        this.setState({ data: this.savedData, loading: false });
         this.setData(this.savedData);
       })
       .catch((error) => console.error("Error loading GZ:", error));
@@ -83,13 +89,10 @@ class App extends Component {
     
     
     var largest = 0;
-    for(var i = 0; i < data.length; i++)
-    {
+    for (var i = 0; i < data.length; i++) {
       var key = data[i].NEIGHBORHOOD;
-      if (geoDataTemp.hasOwnProperty(key))
-        geoDataTemp[key]++;
-      else
-        geoDataTemp[key] = 1;
+      if (geoDataTemp.hasOwnProperty(key)) geoDataTemp[key]++;
+      else geoDataTemp[key] = 1;
 
       if(geoDataTemp[key] > largest)
         largest = geoDataTemp[key];
@@ -106,7 +109,6 @@ class App extends Component {
 
     geoDataTemp["__largest__"] = largest;
 
-
     this.setState({ geoData: geoDataTemp, vehicleTypeOptions: Object.entries(vehTypeTemp)
       .filter(([key, value]) => value > 1000 && key !== "" && key !== "UNKNOWN")
       .map(([key]) => key) });
@@ -115,27 +117,32 @@ class App extends Component {
 
 
   filterData = () => {
-    
-    const filteredData = this.savedData.filter(row =>
-      (this.vehType === "All" || 
-        row["VEHICLE TYPE CODE 1"] === this.vehType ||
-        row["VEHICLE TYPE CODE 2"] === this.vehType ||
-        row["VEHICLE TYPE CODE 3"] === this.vehType ||
-        row["VEHICLE TYPE CODE 4"] === this.vehType ||
-        row["VEHICLE TYPE CODE 5"] === this.vehType) &&
-      (this.borough === "All" || row.BOROUGH === this.borough.toUpperCase()) &&
-      (row["CRASH DATE"] >= this.startDate) &&
-      (row["CRASH DATE"] <= this.endDate));
+    const filteredData = this.savedData.filter(
+      (row) =>
+        (this.vehType === "All" ||
+          row["VEHICLE TYPE CODE 1"] === this.vehType ||
+          row["VEHICLE TYPE CODE 2"] === this.vehType ||
+          row["VEHICLE TYPE CODE 3"] === this.vehType ||
+          row["VEHICLE TYPE CODE 4"] === this.vehType ||
+          row["VEHICLE TYPE CODE 5"] === this.vehType) &&
+        (this.borough === "All" ||
+          row.BOROUGH === this.borough.toUpperCase()) &&
+        row["CRASH DATE"] >= this.startDate &&
+        row["CRASH DATE"] <= this.endDate
+    );
 
-    
-    this.setState({ data: filteredData });
+    this.setState({ data: filteredData, loading: false });
     this.setData(filteredData);
-
   };
 
   filterBoroughData = (borough) => {
     this.borough = borough;
-    this.filterData()
+    this.filterData();
+  };
+
+  filterVehTypeData = (vehType) => {
+    this.vehType = vehType;
+    this.filterData();
   };
 
   filterVehTypeData = (vehType) => {
@@ -190,9 +197,12 @@ class App extends Component {
               </svg>
             </div>
           </div>
-          
+
           <div className="incidencesAndOutcome">
-            <StackedBarChart data={this.state.data} />
+            <StackedBarChart
+              data={this.state.data}
+              loading={this.state.loading}
+            />
           </div>
         </div>
       </div>
