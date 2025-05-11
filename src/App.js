@@ -4,6 +4,8 @@ import * as d3 from "d3";
 import DropDownFilter from "./DropDownFilter";
 import StackedBarChart from "./StackedBarChart";
 import GeoMap from "./GeoMap";
+import ContributingFactorsChart from './ContributingFactorsChart'
+import DateRangeSlider from "./DateRangeSlider";
 import pako from "pako";
 
 class App extends Component {
@@ -12,13 +14,13 @@ class App extends Component {
     this.savedData = [];
     this.borough = "All";
     this.vehType = "All";
-    this.startDate = new Date(1970, 0, 1);
-    this.endDate = new Date(2070, 0, 1);
+    this.startDate = new Date(2012, 0, 1);
+    this.endDate = new Date(2025, 11, 31);
     this.state = {
       data: [],
       geoData: {},
       vehicleTypeOptions: [],
-      loading: true,
+      loading: true
     };
 
     fetch("cs450-m3/NYCrashes2025.gz")
@@ -75,14 +77,6 @@ class App extends Component {
       .catch((error) => console.error("Error loading GZ:", error));
   }
 
-  componentDidMount() {
-    this.renderChart();
-  }
-
-  componentDidUpdate() {
-    this.renderChart();
-  }
-
   setData = (data) => {
     var geoDataTemp = {};
     var vehTypeTemp = {};
@@ -130,7 +124,6 @@ class App extends Component {
         row["CRASH DATE"] >= this.startDate &&
         row["CRASH DATE"] <= this.endDate
     );
-
     this.setState({ data: filteredData, loading: false });
     this.setData(filteredData);
   };
@@ -142,28 +135,31 @@ class App extends Component {
 
   filterVehTypeData = (vehType) => {
     this.vehType = vehType;
-    this.filterData();
-  };
-
-  filterVehTypeData = (vehType) => {
-    this.vehType = vehType;
     this.filterData()
   };
 
-  renderChart = () => {
-    var margin = { left: 50, right: 150, top: 10, bottom: 100 },
-      width = 600,
-      height = 600;
-    var innerWidth = width - margin.left - margin.right;
-    var innerHeight = height - margin.top - margin.bottom;
-    var tooltipWidth = 300,
-      tooltipHeight = 300;
-    var data = this.state.data;
+  filterDateRange = ([start, end]) => {
+    this.startDate = start;
+    this.endDate = end;
+    this.filterData();
+  };
 
-    const svg = d3
-      .select(".container")
-      .attr("width", width * 2)
-      .attr("height", height * 2);
+  computeContributingFactors = () => {
+    const factorCounts = {};
+
+    this.state.data.forEach((row) => {
+      for (let i = 1; i <= 5; i++) {
+        const factor = row[`CONTRIBUTING FACTOR VEHICLE ${i}`];
+        if (factor && factor !== "" && factor !== "Unspecified") {
+          factorCounts[factor] = (factorCounts[factor] || 0) + 1;
+        }
+      }
+    });
+
+    return Object.entries(factorCounts)
+      .map(([factor, count]) => ({ factor, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
   };
 
   render() {
@@ -188,14 +184,15 @@ class App extends Component {
               label="Vehicle Type"
               options={this.state.vehicleTypeOptions}
             />
+            <DateRangeSlider
+              startDate={this.startDate}
+              endDate={this.endDate}
+              onChange={this.filterDateRange}
+            />
           </div>
           <div className="geoMapAndContFactors">
             <GeoMap data={this.state.geoData} />
-            <div className="contributingFactors">
-              <svg className="contributingFactors_svg">
-                <g className="contributingFactors_group"></g>
-              </svg>
-            </div>
+            <ContributingFactorsChart data={this.computeContributingFactors()} />
           </div>
 
           <div className="incidencesAndOutcome">
