@@ -4,6 +4,8 @@ import * as d3 from "d3";
 import DropDownFilter from "./DropDownFilter";
 import StackedBarChart from "./StackedBarChart";
 import GeoMap from "./GeoMap";
+import ContributingFactorsChart from './ContributingFactorsChart'
+import DateRangeSlider from "./DateRangeSlider";
 import pako from "pako";
 
 class App extends Component {
@@ -150,6 +152,30 @@ class App extends Component {
     this.filterData()
   };
 
+  computeContributingFactors = () => {
+    const factorCounts = {};
+
+    this.state.data.forEach((row) => {
+      for (let i = 1; i <= 5; i++) {
+        const factor = row[`CONTRIBUTING FACTOR VEHICLE ${i}`];
+        if (factor && factor !== "" && factor !== "Unspecified") {
+          factorCounts[factor] = (factorCounts[factor] || 0) + 1;
+        }
+      }
+    });
+
+    return Object.entries(factorCounts)
+      .map(([factor, count]) => ({ factor, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  };
+
+  handleDateRangeChange = ([start, end]) => {
+    this.startDate = start;
+    this.endDate = end;
+    this.filterData();
+  };
+
   renderChart = () => {
     var margin = { left: 50, right: 150, top: 10, bottom: 100 },
       width = 600,
@@ -188,10 +214,16 @@ class App extends Component {
               label="Vehicle Type"
               options={this.state.vehicleTypeOptions}
             />
+            <DateRangeSlider
+              startDate={this.startDate || new Date(1970, 0, 1)}
+              endDate={this.endDate || new Date(2070, 0, 1)}
+              onChange={this.handleDateRangeChange}
+            />  
           </div>
           <div className="geoMapAndContFactors">
             <GeoMap data={this.state.geoData} />
             <div className="contributingFactors">
+              <ContributingFactorsChart data={this.computeContributingFactors()} />
               <svg className="contributingFactors_svg">
                 <g className="contributingFactors_group"></g>
               </svg>
