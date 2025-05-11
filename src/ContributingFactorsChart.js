@@ -59,7 +59,7 @@ const ContributingFactorsChart = ({ data }) => {
   }, [data]);
 
   return (
-    <div>
+    <div className="contributingFactors">
       <h2>Contributing Factors Leading to a Crash</h2>
       <svg ref={svgRef}></svg>
       <div

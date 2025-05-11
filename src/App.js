@@ -14,13 +14,13 @@ class App extends Component {
     this.savedData = [];
     this.borough = "All";
     this.vehType = "All";
+    this.startDate = new Date(2012, 0, 1);
+    this.endDate = new Date(2025, 11, 31);
     this.state = {
       data: [],
       geoData: {},
       vehicleTypeOptions: [],
-      loading: true,
-      startDate: new Date(2012, 0, 1),
-      endDate: new Date(2025, 11, 31),
+      loading: true
     };
 
     fetch("cs450-m3/NYCrashes2025.gz")
@@ -77,16 +77,6 @@ class App extends Component {
       .catch((error) => console.error("Error loading GZ:", error));
   }
 
-  componentDidMount() {
-    this.renderChart();
-  }
-/*
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.data !== this.state.data) {
-      this.renderChart();
-    }
-  }
-*/
   setData = (data) => {
     var geoDataTemp = {};
     var vehTypeTemp = {};
@@ -134,13 +124,23 @@ class App extends Component {
         row["CRASH DATE"] >= this.startDate &&
         row["CRASH DATE"] <= this.endDate
     );
-
     this.setState({ data: filteredData, loading: false });
     this.setData(filteredData);
   };
 
   filterBoroughData = (borough) => {
     this.borough = borough;
+    this.filterData();
+  };
+
+  filterVehTypeData = (vehType) => {
+    this.vehType = vehType;
+    this.filterData()
+  };
+
+  filterDateRange = ([start, end]) => {
+    this.startDate = start;
+    this.endDate = end;
     this.filterData();
   };
 
@@ -160,20 +160,6 @@ class App extends Component {
       .map(([factor, count]) => ({ factor, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  };
-
-  handleDateRangeChange = ([start, end]) => {
-    this.startDate = start;
-    this.endDate = end;
-    this.setState({ startDate: start, endDate: end });
-    setTimeout(() => {
-      this.filterData();
-    }, 0);
-  };
-   
-  renderChart = () => {
-    const width = 600, height = 600;
-    d3.select(".container").attr("width", width * 2).attr("height", height * 2);
   };
 
   render() {
@@ -199,16 +185,14 @@ class App extends Component {
               options={this.state.vehicleTypeOptions}
             />
             <DateRangeSlider
-              startDate={this.state.startDate}
-              endDate={this.state.endDate}
-              onChange={this.handleDateRangeChange}
+              startDate={this.startDate}
+              endDate={this.endDate}
+              onChange={this.filterDateRange}
             />
           </div>
           <div className="geoMapAndContFactors">
             <GeoMap data={this.state.geoData} />
-            <div className="contributingFactors">
             <ContributingFactorsChart data={this.computeContributingFactors()} />
-            </div>
           </div>
 
           <div className="incidencesAndOutcome">
