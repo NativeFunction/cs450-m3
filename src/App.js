@@ -14,13 +14,13 @@ class App extends Component {
     this.savedData = [];
     this.borough = "All";
     this.vehType = "All";
-    this.startDate = new Date(1970, 0, 1);
-    this.endDate = new Date(2070, 0, 1);
     this.state = {
       data: [],
       geoData: {},
       vehicleTypeOptions: [],
       loading: true,
+      startDate: new Date(2012, 0, 1),
+      endDate: new Date(2025, 11, 31),
     };
 
     fetch("cs450-m3/NYCrashes2025.gz")
@@ -80,11 +80,13 @@ class App extends Component {
   componentDidMount() {
     this.renderChart();
   }
-
-  componentDidUpdate() {
-    this.renderChart();
+/*
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.data !== this.state.data) {
+      this.renderChart();
+    }
   }
-
+*/
   setData = (data) => {
     var geoDataTemp = {};
     var vehTypeTemp = {};
@@ -142,16 +144,6 @@ class App extends Component {
     this.filterData();
   };
 
-  filterVehTypeData = (vehType) => {
-    this.vehType = vehType;
-    this.filterData();
-  };
-
-  filterVehTypeData = (vehType) => {
-    this.vehType = vehType;
-    this.filterData()
-  };
-
   computeContributingFactors = () => {
     const factorCounts = {};
 
@@ -173,23 +165,15 @@ class App extends Component {
   handleDateRangeChange = ([start, end]) => {
     this.startDate = start;
     this.endDate = end;
-    this.filterData();
+    this.setState({ startDate: start, endDate: end });
+    setTimeout(() => {
+      this.filterData();
+    }, 0);
   };
-
+   
   renderChart = () => {
-    var margin = { left: 50, right: 150, top: 10, bottom: 100 },
-      width = 600,
-      height = 600;
-    var innerWidth = width - margin.left - margin.right;
-    var innerHeight = height - margin.top - margin.bottom;
-    var tooltipWidth = 300,
-      tooltipHeight = 300;
-    var data = this.state.data;
-
-    const svg = d3
-      .select(".container")
-      .attr("width", width * 2)
-      .attr("height", height * 2);
+    const width = 600, height = 600;
+    d3.select(".container").attr("width", width * 2).attr("height", height * 2);
   };
 
   render() {
@@ -215,18 +199,15 @@ class App extends Component {
               options={this.state.vehicleTypeOptions}
             />
             <DateRangeSlider
-              startDate={this.startDate || new Date(1970, 0, 1)}
-              endDate={this.endDate || new Date(2070, 0, 1)}
+              startDate={this.state.startDate}
+              endDate={this.state.endDate}
               onChange={this.handleDateRangeChange}
-            />  
+            />
           </div>
           <div className="geoMapAndContFactors">
             <GeoMap data={this.state.geoData} />
             <div className="contributingFactors">
-              <ContributingFactorsChart data={this.computeContributingFactors()} />
-              <svg className="contributingFactors_svg">
-                <g className="contributingFactors_group"></g>
-              </svg>
+            <ContributingFactorsChart data={this.computeContributingFactors()} />
             </div>
           </div>
 
