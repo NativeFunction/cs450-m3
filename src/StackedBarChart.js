@@ -52,7 +52,7 @@ function computeBarData(data) {
     { label: "Killed Cyclists", value: killedCyclists, color: "#e53935" },
     { label: "Injured Motorists", value: injuredMotorists, color: "#6d4c41" },
     { label: "Killed Motorists", value: killedMotorists, color: "#ffd600" },
-  ];
+  ].sort((a,b) => b.value - a.value);
 }
 
 const BAR_HEIGHT = 54;
@@ -66,7 +66,7 @@ const BOTTOM_LABEL_HEIGHT = 30;
 const MIN_WIDTH = 600;
 const MIN_HEIGHT = 200;
 const TITLE_LEGEND_GAP = 18;
-const MIN_BAR_SEGMENT_WIDTH = 35; // px
+const MIN_BAR_SEGMENT_WIDTH = 0; // px
 
 class StackedBarChart extends Component {
   constructor(props) {
@@ -226,7 +226,7 @@ class StackedBarChart extends Component {
       .attr("font-family", "sans-serif")
       .attr("font-weight", 600)
       .text((d) =>
-        d.pct < 0.01 && d.value > 0 ? "<1%" : `${Math.round(d.pct * 100)}%`
+        d.pct < 0.01 && d.value > 0 ? "" : `${Math.round(d.pct * 100)}%`
       )
       .filter((d, i) => pixelWidths[i] <= 14)
       .text("");
