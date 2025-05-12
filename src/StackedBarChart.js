@@ -52,7 +52,7 @@ function computeBarData(data) {
     { label: "Killed Cyclists", value: killedCyclists, color: "#e53935" },
     { label: "Injured Motorists", value: injuredMotorists, color: "#6d4c41" },
     { label: "Killed Motorists", value: killedMotorists, color: "#ffd600" },
-  ];
+  ].sort((a,b) => b.value - a.value);
 }
 
 const BAR_HEIGHT = 54;
@@ -67,7 +67,7 @@ const BOTTOM_LABEL_HEIGHT = 30;
 const MIN_WIDTH = 600;
 const MIN_HEIGHT = 200;
 const TITLE_LEGEND_GAP = 18;
-const MIN_BAR_SEGMENT_WIDTH = 35; // px
+const MIN_BAR_SEGMENT_WIDTH = 0; // px
 
 const StackedBarChart = ({ data, loading }) => {
   const svgRef = useRef();
@@ -184,13 +184,12 @@ const StackedBarChart = ({ data, loading }) => {
         .attr("width", barWidth)
         .attr("height", BAR_HEIGHT)
         .attr("fill", d.color)
-        .attr("rx", i === 0 ? 8 : 0)
-        .attr("ry", i === 0 ? 8 : 0)
+        .attr("rx", i)
+        .attr("ry", i)
         .attr("stroke-width", 0)
         .attr("stroke", "none");
       // Percentage label
-      let pctLabel =
-        d.pct < 0.01 && d.value > 0 ? "<1%" : `${Math.round(d.pct * 100)}%`;
+      let pctLabel = `${Math.round(d.pct * 100)}%`;
       if (barWidth > 14) {
         svg
           .append("text")
