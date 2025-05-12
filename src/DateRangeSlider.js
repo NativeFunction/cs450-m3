@@ -4,6 +4,7 @@ import * as d3 from "d3";
 const DateRangeSlider = ({ startDate, endDate, onChange }) => {
   const sliderRef = useRef();
   const [range, setRange] = useState([startDate, endDate]);
+  const range2 = [startDate, endDate]
 
   useEffect(() => {
     const svg = d3.select(sliderRef.current);
@@ -22,6 +23,8 @@ const DateRangeSlider = ({ startDate, endDate, onChange }) => {
       .on("start drag", function (event, d) {
         const xDate = x.invert(event.x);
         const roundedDate = new Date(xDate.getFullYear(), xDate.getMonth());
+        const index = event.subject;
+        range2[index] = roundedDate;
         setRange((prev) => {
           const newRange = [...prev];
           newRange[d] = roundedDate;
@@ -31,7 +34,7 @@ const DateRangeSlider = ({ startDate, endDate, onChange }) => {
         });
       })
       .on("end", () => {
-        onChange(range);
+        onChange(range2);
       });
 
     svg.append("line")
